@@ -18,8 +18,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Error listening:", err.Error())
 	}
-	defer ln.Close();
-	log.Print("Listening on: ", listenAddr);
+	defer ln.Close()
+	log.Print("Listening on: ", listenAddr)
 
 	for {
 		conn, err := ln.Accept()
@@ -27,7 +27,7 @@ func main() {
 			log.Print("Error accepting:", err.Error())
 			continue
 		}
-		defer conn.Close();
+		defer conn.Close()
 		log.Print("Accepted connection from: ", conn.RemoteAddr().String())
 
 		buf := make([]byte, 1024)
