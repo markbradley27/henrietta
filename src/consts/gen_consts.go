@@ -44,7 +44,6 @@ func loadYAML(yamlPath string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading consts.yaml: %w", err)
 	}
-	log.Printf("constsYaml:\n%s", string(constsYaml))
 
 	consts := make(map[string]interface{})
 	if err = yaml.Unmarshal(constsYaml, &consts); err != nil {
