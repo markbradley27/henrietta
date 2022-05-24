@@ -5,16 +5,17 @@ package(default_visibility = ["//visibility:public"])
 go_binary(
     name = "gen_consts",
     srcs = ["gen_consts.go"],
+    deps = ["@com_github_go_yaml_yaml//:yaml"],
 )
 
 genrule(
     name = "consts",
-    srcs = ["consts.json"],
+    srcs = ["consts.yaml"],
     outs = [
         "consts.h",
         "consts.go",
     ],
-    cmd = "$(location :gen_consts) --json_path $< --c_out $(RULEDIR)/consts.h --go_out $(RULEDIR)/consts.go",
+    cmd = "$(location :gen_consts) --yaml_path $< --c_out $(RULEDIR)/consts.h --go_out $(RULEDIR)/consts.go",
     tools = [":gen_consts"],
 )
 
@@ -23,14 +24,4 @@ go_library(
     srcs = ["consts.go"],
     embedsrcs = [":consts"],
     importpath = "github.com/henrietta/src/consts/go_consts",
-)
-
-go_library(
-    name = "consts_lib",
-    srcs = [
-        "consts.go",
-        "consts.h",
-        "gen_consts.go",
-    ],
-    importpath = "github.com/markbradley27/henrietta/src/consts",
 )

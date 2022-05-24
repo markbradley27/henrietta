@@ -1,9 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
+	yaml "github.com/go-yaml/yaml"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,12 +11,12 @@ import (
 )
 
 func main() {
-	jsonPath := flag.String("json_path", "consts.json", "Path to consts json file.")
+	yamlPath := flag.String("yaml_path", "./consts.yaml", "Path to consts yaml file.")
 	cOutPath := flag.String("c_out", "", "Output c file.")
 	goOutPath := flag.String("go_out", "", "Output go file.")
 	flag.Parse()
 
-	consts, err := loadJSON(*jsonPath)
+	consts, err := loadYAML(*yamlPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,21 +33,22 @@ func main() {
 	}
 }
 
-func loadJSON(jsonPath string) (map[string]interface{}, error) {
-	file, err := os.Open(jsonPath)
+func loadYAML(yamlPath string) (map[string]interface{}, error) {
+	file, err := os.Open(yamlPath)
 	if err != nil {
-		return nil, fmt.Errorf("opening consts.json: %w", err)
+		return nil, fmt.Errorf("opening consts.yaml: %w", err)
 	}
 	defer file.Close()
 
-	constsJson, err := ioutil.ReadAll(file)
+	constsYaml, err := ioutil.ReadAll(file)
 	if err != nil {
-		return nil, fmt.Errorf("reading consts.json: %w", err)
+		return nil, fmt.Errorf("reading consts.yaml: %w", err)
 	}
+	log.Printf("constsYaml:\n%s", string(constsYaml))
 
-	var consts map[string]interface{}
-	if err = json.Unmarshal(constsJson, &consts); err != nil {
-		return nil, fmt.Errorf("unmarshalling consts.json: %w", err)
+	consts := make(map[string]interface{})
+	if err = yaml.Unmarshal(constsYaml, &consts); err != nil {
+		log.Fatal("unmarshalling consts.yaml: ", err)
 	}
 	return consts, nil
 }
