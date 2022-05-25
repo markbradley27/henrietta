@@ -21,6 +21,26 @@ go_repository(
     tag = "v3.0.0",
 )
 
+# Required for paho.mqtt.golang.
+go_repository(
+		name = "com_github_gorilla_websocket",
+		importpath = "github.com/gorilla/websocket",
+		tag = "v1.5.0",
+)
+
+# Required for paho.mqtt.golang.
+#go_repository(
+#		name = "org_golang_x_net_proxy",
+#		importpath = "golang.org/x/net/proxy",
+#		tag = "v0.0.0-20220520000938-2e3eb7b945c2",
+#)
+
+go_repository(
+		name = "com_github_eclipse_paho_mqtt_golang",
+		importpath = "github.com/eclipse/paho.mqtt.golang",
+		tag = "v1.3.5",
+)
+
 go_rules_dependencies()
 
 go_register_toolchains(version = "1.18.2")

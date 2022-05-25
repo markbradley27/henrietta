@@ -1,3 +1,11 @@
+# RPI
 wifi_ssid: "henrietta"
 wifi_password: "notgonnapayrent"
 rpi_ip: "192.168.138.1"
+
+# MQTT
+mosquitto_port: 1883
+
+topic_metrics_enviro: "metrics/enviro"
+
+client_id_db_logger: "db_logger"
