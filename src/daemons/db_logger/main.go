@@ -6,8 +6,9 @@ import (
 	"log"
 	"time"
 
+	consts "github.com/markbradley27/henrietta/src/consts/go_consts"
+
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	consts "github.com/henrietta/src/consts/go_consts"
 )
 
 func main() {

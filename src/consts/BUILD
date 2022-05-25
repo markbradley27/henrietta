@@ -23,5 +23,5 @@ go_library(
     name = "go_consts",
     srcs = ["consts.go"],
     embedsrcs = [":consts"],
-    importpath = "github.com/henrietta/src/consts/go_consts",
+    importpath = "github.com/markbradley27/henrietta/src/consts/go_consts",
 )
