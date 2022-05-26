@@ -7,8 +7,11 @@ import (
 	"time"
 
 	consts "github.com/markbradley27/henrietta/src/consts/go_consts"
+	enviro_proto "github.com/markbradley27/henrietta/src/proto/enviro_go_proto"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	prototext "google.golang.org/protobuf/encoding/prototext"
+	proto "google.golang.org/protobuf/proto"
 )
 
 func main() {
@@ -50,6 +53,19 @@ func ConnectMQTTClient(addr, clientID string) (mqtt.Client, error) {
 }
 
 func HandleMetricEnviro(client mqtt.Client, message mqtt.Message) {
-	log.Printf("Handling topic %#v message: %s", message.Topic(), message.Payload())
+	log.Printf("Handling topic %#v message: %#v", message.Topic(), message.Payload())
+	var data enviro_proto.EnvironmentalData
+	if err := proto.Unmarshal(message.Payload(), &data); err != nil {
+		log.Printf("Error unmarshalling EnvironmentalData message: %v", err)
+		return
+	}
+
+	text, err := prototext.Marshal(&data)
+	if err != nil {
+		log.Printf("Error text formatting EnvironmentalData message: %v", err)
+		return
+	}
+	log.Printf("Unmarshalled to: %s", text)
+
 	message.Ack()
 }
