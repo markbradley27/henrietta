@@ -1,9 +1,7 @@
 syntax = 'proto2';
 
-import "google/protobuf/timestamp.proto";
-
 message EnvironmentalData {
-	optional google.protobuf.Timestamp timestamp = 1;
+	optional uint64 timestamp = 1; // Epoch seconds.
 	optional uint32 aqi_pm25_standard_10_m_avg = 2;
 	optional float temp_c_10_m_avg = 3;
 	optional float humidity_10_m_avg = 4;
