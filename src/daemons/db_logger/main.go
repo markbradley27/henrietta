@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	consts "github.com/markbradley27/henrietta/src/consts/go_consts"
@@ -15,10 +16,22 @@ import (
 )
 
 func main() {
+	logFilePath := flag.String("log_file", "", "Log file.")
+
 	mqttHost := flag.String("mqtt_host", consts.RpiIp, "MQTT broker host.")
 	mqttPort := flag.Int("mqtt_port", consts.MosquittoPort, "MQTT broker port.")
 	mqttClientID := flag.String("mqtt_client_id", consts.ClientIdDbLogger, "MQTT client id.")
 	flag.Parse()
+
+	if *logFilePath != "" {
+		logFile, err := os.OpenFile(*logFilePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+		if err != nil {
+			log.Printf("Unable to open log file %v, logging to stderr.", *logFilePath)
+		} else {
+			log.Printf("Logging to %v.", *logFilePath)
+			log.SetOutput(logFile)
+		}
+	}
 
 	mqttAddr := fmt.Sprintf("tcp://%s:%d", *mqttHost, *mqttPort)
 	log.Printf("Connecting to MQTT server at %#v as %#v...", mqttAddr, *mqttClientID)
