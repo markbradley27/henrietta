@@ -7,19 +7,21 @@
 #include <MQTT.h>
 #include <SoftwareSerial.h>
 #include <Wire.h>
+#include <pb_encode.h>
 
 #include "ath_big_numbers_displayer.h"
 #include "ath_raw_displayer.h"
 #include "blank_displayer.h"
 #include "button.h"
 #include "displayer.h"
+#include "enviro_platformio_proto.h"
 #include "platformio_consts.h"
 #include "ring_buffer.h"
 #include "util.h"
 
 // Every X seconds, read sensor and update screen
 #define UPDATE_INTERVAL_SECONDS 5
-#define UPLOAD_INTERVAL_MINUTES 10
+#define UPLOAD_INTERVAL_MINUTES 5
 #define NUM_BUFFERED_VALUES 120 // 10min * 60s / UPDATE_INTERVAL_SECONDS
 
 // OLED screen
@@ -152,6 +154,74 @@ bool ReadAqiSensor(PM25_AQI_Data *data) {
   return false;
 }
 
+void ReadAllSensors() {
+  Serial.println("Reading sensors...");
+  PM25_AQI_Data data;
+  if (ReadAqiSensor(&data)) {
+    aqi_values.Insert(data.pm25_standard, millis());
+    Serial.println("AQI: " + String(aqi_values.Latest().value));
+  }
+
+  float temp_c = dht.readTemperature() + TEMP_CALIBRATION_OFFSET;
+  if (!isnan(temp_c)) {
+    temp_c_values.Insert(temp_c, millis());
+    Serial.println("Temp: " + String(temp_c_values.Latest().value) + "°C, " +
+                   String(CToF(temp_c_values.Latest().value)) + "°F");
+  }
+
+  float humidity = dht.readHumidity() + HUMIDITY_CALIBRATION_OFFSET;
+  if (!isnan(humidity)) {
+    humidity_values.Insert(humidity, millis());
+    Serial.println("Humidity: " + String(humidity_values.Latest().value) + "%");
+  }
+
+  displayers[displayer_i]->Update();
+}
+
+void UploadData() {
+  Serial.println("Uploading data...");
+  WiFiClient wifi_client;
+  MQTTClient mqtt_client;
+  mqtt_client.begin(RPI_IP, MOSQUITTO_PORT, wifi_client);
+  if (!mqtt_client.connect(CLIENT_ID_ENVIRO_MICKY)) {
+    Serial.println("MQTT client connection failed.");
+    return;
+  }
+
+  EnvironmentalData data = EnvironmentalData_init_zero;
+  data.has_timestamp = true;
+  data.timestamp = 27;
+  data.has_aqi_pm25_standard_5_m_avg = true;
+  data.aqi_pm25_standard_5_m_avg = aqi_values.Average(minutes(5));
+  data.has_temp_c_5_m_avg = true;
+  data.temp_c_5_m_avg = temp_c_values.Average(minutes(5));
+  data.has_humidity_5_m_avg = true;
+  data.humidity_5_m_avg = humidity_values.Average(minutes(5));
+
+  // TODO: Can I get a more exact estimation of the required buffer size?
+  uint8_t buffer[128];
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+  const bool status = pb_encode(&stream, &EnvironmentalData_msg, &data);
+  if (!status) {
+    Serial.println("Encoding EnvironmentalData message failed.");
+    return;
+  }
+  const uint8_t message_length = stream.bytes_written;
+
+  Serial.print("EnvironmentalData encoded: ");
+  char print_buffer[8];
+  for (uint8_t i = 0; i < message_length; ++i) {
+    sprintf(print_buffer, "%x ", buffer[i]);
+    Serial.print(print_buffer);
+  }
+  Serial.println("");
+
+  mqtt_client.publish(TOPIC_METRICS_ENVIRO,
+                      reinterpret_cast<const char *>(buffer), message_length,
+                      /*retained=*/false,
+                      /*qos=*/2);
+}
+
 void loop() {
   const int displayer_change =
       right_button.UnhandledPresses() - left_button.UnhandledPresses();
@@ -163,45 +233,11 @@ void loop() {
 
   if (timer_read_sensor.Complete()) {
     timer_read_sensor.Reset();
-
-    PM25_AQI_Data data;
-    if (ReadAqiSensor(&data)) {
-      aqi_values.Insert(data.pm25_standard, millis());
-      Serial.println("AQI: " + String(aqi_values.Latest().value));
-    }
-
-    float temp_c = dht.readTemperature() + TEMP_CALIBRATION_OFFSET;
-    if (!isnan(temp_c)) {
-      temp_c_values.Insert(temp_c, millis());
-      Serial.println("Temp: " + String(temp_c_values.Latest().value) + "°C, " +
-                     String(CToF(temp_c_values.Latest().value)) + "°F");
-    }
-
-    float humidity = dht.readHumidity() + HUMIDITY_CALIBRATION_OFFSET;
-    if (!isnan(humidity)) {
-      humidity_values.Insert(humidity, millis());
-      Serial.println("Humidity: " + String(humidity_values.Latest().value) +
-                     "%");
-    }
-
-    displayers[displayer_i]->Update();
+    ReadAllSensors();
   }
 
   if (timer_upload_data.Complete()) {
     timer_upload_data.Reset();
-
-    WiFiClient wifi_client;
-    MQTTClient mqtt_client;
-    mqtt_client.begin(RPI_IP, MOSQUITTO_PORT, wifi_client);
-    if (!mqtt_client.connect(CLIENT_ID_ENVIRO_MICKY)) {
-      Serial.println("MQTT client connection failed.");
-      return;
-    }
-
-    mqtt_client.publish(
-        TOPIC_METRICS_ENVIRO,
-        "Temperature: " + String(temp_c_values.Average(minutes(10))) +
-            "\nHumidity: " + String(humidity_values.Average(minutes(10))) +
-            "\nAQI: " + String(aqi_values.Average(minutes(10))));
+    UploadData();
   }
 }

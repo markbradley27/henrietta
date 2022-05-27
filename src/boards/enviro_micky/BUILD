@@ -28,6 +28,7 @@ platformio_project(
             adafruit/Adafruit SSD1306@^2.5.3
             adafruit/Adafruit Unified Sensor@^1.1.5
             adafruit/DHT sensor library@^1.4.3
+            nanopb/Nanopb@^0.4.6
         """,
     },
     framework = "arduino",
@@ -40,5 +41,6 @@ platformio_project(
         "//src/boards/enviro_micky/displayers:ath_raw_displayer",
         "//src/boards/enviro_micky/displayers:blank_displayer",
         "//src/consts:platformio_consts",
+        "//src/proto:enviro_platformio_proto",
     ],
 )
