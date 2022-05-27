@@ -4,6 +4,7 @@
 #include "config.h"
 #include <Adafruit_SSD1306.h>
 #include <ESP8266WiFi.h>
+#include <MQTT.h>
 #include <SoftwareSerial.h>
 #include <Wire.h>
 
@@ -12,6 +13,7 @@
 #include "blank_displayer.h"
 #include "button.h"
 #include "displayer.h"
+#include "platformio_consts.h"
 #include "ring_buffer.h"
 #include "util.h"
 
@@ -27,12 +29,6 @@
 // See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 #define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
-// Wifi
-#define SSID "henrietta"
-#define PASSWORD "notgonnapayrent"
-#define HOST "192.168.138.1"
-#define PORT 42901
 
 // AQI sensor
 SoftwareSerial aqi_serial(2, 3);
@@ -93,9 +89,9 @@ void InitDisplay() {
 
 void InitWifi() {
   WiFi.mode(WIFI_STA);
-  WiFi.begin(SSID, PASSWORD);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   const int timeout_millis = millis() + 7000;
-  Serial.print("Connecting to Wifi(" + String(SSID) + ")");
+  Serial.print("Connecting to Wifi(" + String(WIFI_SSID) + ")");
   while (WiFi.status() != WL_CONNECTED && millis() < timeout_millis) {
     Serial.print(".");
     delay(500);
@@ -194,15 +190,18 @@ void loop() {
   if (timer_upload_data.Complete()) {
     timer_upload_data.Reset();
 
-    WiFiClient client;
-    if (!client.connect(HOST, PORT)) {
-      Serial.println("Tried to upload data but TCP client connection failed.");
+    WiFiClient wifi_client;
+    MQTTClient mqtt_client;
+    mqtt_client.begin(RPI_IP, MOSQUITTO_PORT, wifi_client);
+    if (!mqtt_client.connect(CLIENT_ID_ENVIRO_MICKY)) {
+      Serial.println("MQTT client connection failed.");
       return;
     }
-    client.println("Temperature: " +
-                   String(temp_c_values.Average(minutes(10))));
-    client.println("Humidity: " + String(humidity_values.Average(minutes(10))));
-    client.println("AQI: " + String(aqi_values.Average(minutes(10))));
-    client.stop();
+
+    mqtt_client.publish(
+        TOPIC_METRICS_ENVIRO,
+        "Temperature: " + String(temp_c_values.Average(minutes(10))) +
+            "\nHumidity: " + String(humidity_values.Average(minutes(10))) +
+            "\nAQI: " + String(aqi_values.Average(minutes(10))));
   }
 }

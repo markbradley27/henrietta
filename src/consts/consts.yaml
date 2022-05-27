@@ -8,4 +8,5 @@ mosquitto_port: 1883
 
 topic_metrics_enviro: "metrics/enviro"
 
+client_id_enviro_micky: "enviro_micky"
 client_id_db_logger: "db_logger"
