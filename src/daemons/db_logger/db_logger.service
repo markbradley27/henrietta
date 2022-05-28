@@ -1,0 +1,15 @@
+[Unit]
+Description="DB logger daemon for henrietta."
+After=postgresql.service
+After=mosquitto.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=pi
+ExecStart=/usr/local/bin/db_logger --log_file /var/log/db_logger.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+touch /var/log/db_logger.log
+chown pi:root /var/log/db_logger.log
+
+systemctl enable db_logger
+systemctl start db_logger

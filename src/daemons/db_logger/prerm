@@ -1,0 +1,4 @@
+#!/bin/sh
+
+systemctl stop db_logger
+systemctl disable db_logger
