@@ -23,7 +23,7 @@ platformio_project(
     board = "nodemcuv2",
     environment_kwargs = {
         "lib_deps": """
-	    256dpi/MQTT@^2.5.0
+            256dpi/MQTT@^2.5.0
             adafruit/Adafruit PM25 AQI Sensor@^1.0.6
             adafruit/Adafruit SSD1306@^2.5.3
             adafruit/Adafruit Unified Sensor@^1.1.5
