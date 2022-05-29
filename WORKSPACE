@@ -55,7 +55,7 @@ go_repository(
     tag = "v3.0.0",
 )
 
-# Required for paho.mqtt.golang.
+# Required by paho.mqtt.golang.
 go_repository(
     name = "com_github_gorilla_websocket",
     importpath = "github.com/gorilla/websocket",
@@ -72,6 +72,13 @@ go_repository(
     name = "org_golang_google_protobuf",
     importpath = "google.golang.org/protobuf",
     tag = "v1.28.0",
+)
+
+
+go_repository(
+    name = "com_github_lib_pq",
+    importpath = "github.com/lib/pq",
+    tag = "v1.10.4",
 )
 
 go_rules_dependencies()

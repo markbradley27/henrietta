@@ -1,29 +1,39 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_binary")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@rules_pkg//pkg:deb.bzl", "pkg_deb")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_filegroup", "pkg_files")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+go_library(
+    name = "mqtt_handler",
+    srcs = ["mqtt_handler.go"],
+    importpath = "github.com/markbradley27/henrietta/src/daemons/db_logger/mqtt_handler",
+    deps = [
+        "//src/proto:enviro_go_proto",
+        "@com_github_eclipse_paho_mqtt_golang//:paho_mqtt_golang",
+        "@org_golang_google_protobuf//encoding/prototext",
+        "@org_golang_google_protobuf//proto",
+    ],
+)
 
 go_binary(
     name = "db_logger",
     srcs = ["main.go"],
     deps = [
+        ":mqtt_handler",
         "//src/consts:go_consts",
-        "//src/proto:enviro_go_proto",
         "@com_github_eclipse_paho_mqtt_golang//:paho_mqtt_golang",
-        "@org_golang_google_protobuf//encoding/prototext",
-        "@org_golang_google_protobuf//proto",
-        "@org_golang_google_protobuf//types/known/timestamppb",
+        "@com_github_lib_pq//:pq",
     ],
 )
 
 pkg_files(
     name = "db_logger_binary_file",
     srcs = [":db_logger"],
-    prefix = "/usr/local/bin",
     attributes = pkg_attributes(
-        user = "pi",
         mode = "0544",
+        user = "pi",
     ),
+    prefix = "/usr/local/bin",
 )
 
 pkg_files(
@@ -49,11 +59,11 @@ pkg_tar(
 
 pkg_deb(
     name = "db_logger_deb",
+    out = "db_logger.deb",
     architecture = "armhf",
     data = ":db_logger_deb_tar",
     description = "Daemon responsible for logging henrietta data to postgres.",
     maintainer = "Mark Bradley <markbradley27@gmail.com>",
-    out = "db_logger.deb",
     package = "db_logger",
     postinst = "postinst",
     postrm = "postrm",
