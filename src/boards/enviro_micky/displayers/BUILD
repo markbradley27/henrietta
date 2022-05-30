@@ -3,6 +3,11 @@ load("@platformio_rules//platformio:platformio.bzl", "platformio_library")
 package(default_visibility = ["//visibility:public"])
 
 platformio_library(
+    name = "displayer",
+    hdr = "displayer.h",
+)
+
+platformio_library(
     name = "aqi_displayer",
     hdr = "aqi_displayer.h",
     deps = [
@@ -30,15 +35,4 @@ platformio_library(
         "//src/boards/enviro_micky:ring_buffer",
         "//src/boards/enviro_micky:util",
     ],
-)
-
-platformio_library(
-    name = "blank_displayer",
-    hdr = "blank_displayer.h",
-    deps = [":displayer"],
-)
-
-platformio_library(
-    name = "displayer",
-    hdr = "displayer.h",
 )

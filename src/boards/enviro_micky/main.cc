@@ -19,18 +19,9 @@
 #include "ring_buffer.h"
 #include "util.h"
 
-// Every X seconds, read sensor and update screen
 #define UPDATE_INTERVAL_SECONDS 5
 #define UPLOAD_INTERVAL_MINUTES 5
-#define NUM_BUFFERED_VALUES 120 // 10min * 60s / UPDATE_INTERVAL_SECONDS
-
-// OLED screen
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
-#define OLED_RESET -1    // Reset pin # (or -1 if sharing Arduino reset pin)
-// See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
-#define SCREEN_ADDRESS 0x3C
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+#define NUM_BUFFERED_VALUES 120
 
 // AQI sensor
 SoftwareSerial aqi_serial(2, 3);
@@ -54,22 +45,30 @@ IRAM_ATTR void middle_button_isr() { middle_button.Isr(); }
 Button left_button(D7);
 IRAM_ATTR void left_button_isr() { left_button.Isr(); }
 
-// Timers
-Timer timer_read_sensor = {seconds(UPDATE_INTERVAL_SECONDS)};
-Timer timer_upload_data = {minutes(UPLOAD_INTERVAL_MINUTES)};
+// OLED screen
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define OLED_RESET -1    // Reset pin # (or -1 if sharing Arduino reset pin)
+// See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+#define SCREEN_ADDRESS 0x3C
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Displayers
-ATHBigNumbersDisplayer aqi_temp_humid_big_numbers_displayer(&display,
-                                                            &aqi_values,
-                                                            &temp_c_values,
-                                                            &humidity_values);
-ATHRawDisplayer aqi_temp_humid_displayer(&display, &aqi_values, &temp_c_values,
-                                         &humidity_values);
-BlankDisplayer blank_displayer(&display);
-std::vector<Displayer *> displayers = {&aqi_temp_humid_big_numbers_displayer,
-                                       &aqi_temp_humid_displayer,
-                                       &blank_displayer};
+#define DISPLAY_TIMEOUT_SECONDS 60
+ATHBigNumbersDisplayer ath_big_numbers_displayer(&display, &aqi_values,
+                                                 &temp_c_values,
+                                                 &humidity_values);
+ATHRawDisplayer ath_raw_displayer(&display, &aqi_values, &temp_c_values,
+                                  &humidity_values);
+std::vector<Displayer *> displayers = {&ath_big_numbers_displayer,
+                                       &ath_raw_displayer};
 int displayer_i = 0;
+bool displaying = true;
+
+// Timers
+Timer timer_display_timeout = {seconds(DISPLAY_TIMEOUT_SECONDS)};
+Timer timer_read_sensor = {seconds(UPDATE_INTERVAL_SECONDS)};
+Timer timer_upload_data = {minutes(UPLOAD_INTERVAL_MINUTES)};
 
 void InitDisplay() {
 
@@ -136,6 +135,30 @@ void setup() {
   dht.begin();
 
   displayers[displayer_i]->Refresh();
+  timer_display_timeout.Reset();
+}
+
+void HandleDisplayChange(const int left_presses, const int middle_presses,
+                         const int right_presses) {
+  if (!displaying) {
+    displaying = true;
+    displayers[displayer_i]->Refresh();
+    return;
+  }
+
+  if (middle_presses != 0) {
+    display.clearDisplay();
+    display.display();
+    displaying = false;
+    return;
+  }
+
+  const int displayer_change = right_presses - left_presses;
+  if (displayer_change != 0) {
+    displayer_i = (displayer_i + displayer_change + 3 * displayers.size()) %
+                  displayers.size();
+    displayers[displayer_i]->Refresh();
+  }
 }
 
 bool ReadAqiSensor(PM25_AQI_Data *data) {
@@ -175,7 +198,9 @@ void ReadAllSensors() {
     Serial.println("Humidity: " + String(humidity_values.Latest().value) + "%");
   }
 
-  displayers[displayer_i]->Update();
+  if (displaying) {
+    displayers[displayer_i]->Update();
+  }
 }
 
 void UploadData() {
@@ -223,12 +248,19 @@ void UploadData() {
 }
 
 void loop() {
-  const int displayer_change =
-      right_button.UnhandledPresses() - left_button.UnhandledPresses();
-  if (displayer_change != 0) {
-    displayer_i = (displayer_i + displayer_change + 3 * displayers.size()) %
-                  displayers.size();
-    displayers[displayer_i]->Refresh();
+  const int left_presses = left_button.UnhandledPresses();
+  const int middle_presses = middle_button.UnhandledPresses();
+  const int right_presses = right_button.UnhandledPresses();
+
+  if (left_presses != 0 || middle_presses != 0 || right_presses != 0) {
+    timer_display_timeout.Reset();
+    HandleDisplayChange(left_presses, middle_presses, right_presses);
+  }
+
+  if (timer_display_timeout.Complete() && displaying) {
+    display.clearDisplay();
+    display.display();
+    displaying = false;
   }
 
   if (timer_read_sensor.Complete()) {
