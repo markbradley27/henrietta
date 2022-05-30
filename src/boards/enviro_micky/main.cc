@@ -5,7 +5,9 @@
 #include <Adafruit_SSD1306.h>
 #include <ESP8266WiFi.h>
 #include <MQTT.h>
+#include <NTPClient.h>
 #include <SoftwareSerial.h>
+#include <WiFiUdp.h>
 #include <Wire.h>
 #include <pb_encode.h>
 
@@ -70,6 +72,10 @@ Timer timer_display_timeout = {seconds(DISPLAY_TIMEOUT_SECONDS)};
 Timer timer_read_sensor = {seconds(UPDATE_INTERVAL_SECONDS)};
 Timer timer_upload_data = {minutes(UPLOAD_INTERVAL_MINUTES)};
 
+// Time
+WiFiUDP ntp_udp;
+NTPClient time_client(ntp_udp, RPI_IP, 0, minutes(60));
+
 void InitDisplay() {
 
   if (!display.begin(
@@ -133,6 +139,7 @@ void setup() {
   InitWifi();
   InitAqiSensor();
   dht.begin();
+  time_client.begin();
 
   displayers[displayer_i]->Refresh();
   timer_display_timeout.Reset();
@@ -215,7 +222,7 @@ void UploadData() {
 
   EnvironmentalData data = EnvironmentalData_init_zero;
   data.has_timestamp = true;
-  data.timestamp = 27;
+  data.timestamp = time_client.getEpochTime();
   data.has_aqi_pm25_standard_5_m_avg = true;
   data.aqi_pm25_standard_5_m_avg = aqi_values.Average(minutes(5));
   data.has_temp_c_5_m_avg = true;
@@ -248,6 +255,10 @@ void UploadData() {
 }
 
 void loop() {
+  // Time client has its own update interval logic, so this is a no-op most of
+  // the time.
+  time_client.update();
+
   const int left_presses = left_button.UnhandledPresses();
   const int middle_presses = middle_button.UnhandledPresses();
   const int right_presses = right_button.UnhandledPresses();

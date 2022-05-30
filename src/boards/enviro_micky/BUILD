@@ -28,6 +28,7 @@ platformio_project(
             adafruit/Adafruit SSD1306@^2.5.3
             adafruit/Adafruit Unified Sensor@^1.1.5
             adafruit/DHT sensor library@^1.4.3
+            arduino-libraries/NTPClient@^3.2.1
             nanopb/Nanopb@^0.4.6
         """,
     },
