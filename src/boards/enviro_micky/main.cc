@@ -97,7 +97,7 @@ void InitDisplay() {
 void InitWifi() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  const int timeout_millis = millis() + 7000;
+  const uint32_t timeout_millis = millis() + 7000;
   Serial.print("Connecting to Wifi(" + String(WIFI_SSID) + ")");
   while (WiFi.status() != WL_CONNECTED && millis() < timeout_millis) {
     Serial.print(".");
