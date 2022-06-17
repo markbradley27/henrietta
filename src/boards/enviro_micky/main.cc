@@ -88,10 +88,6 @@ void InitDisplay() {
   display.clearDisplay();
 
   display.setTextColor(SSD1306_WHITE);
-
-  // Dim display a bit.
-  display.ssd1306_command(SSD1306_SETCONTRAST);
-  display.ssd1306_command(0x01);
 }
 
 void InitWifi() {
