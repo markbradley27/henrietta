@@ -24,12 +24,12 @@
 
 #define UPDATE_INTERVAL_SECONDS 5
 #define UPLOAD_INTERVAL_MINUTES 5
-#define NUM_BUFFERED_VALUES 720
 
 // AQI sensor
 SoftwareSerial aqi_serial(2, 3);
 Adafruit_PM25AQI aqi_sensor = Adafruit_PM25AQI();
-RingBuffer<uint16_t> aqi_values(NUM_BUFFERED_VALUES);
+RingBuffer<uint16_t> aqi_values(5 * 60 / UPDATE_INTERVAL_SECONDS);
+RingBuffer<uint16_t> aqi_5m_avgs(24 * 60 / UPLOAD_INTERVAL_MINUTES);
 
 // DHT22 Temp/Humidity sensor
 // Value that should be added to each temp reading.
@@ -37,8 +37,10 @@ RingBuffer<uint16_t> aqi_values(NUM_BUFFERED_VALUES);
 // Value that should be added to each humidity reading.
 #define HUMIDITY_CALIBRATION_OFFSET 12.28
 DHT dht(0, DHT22);
-RingBuffer<float> temp_c_values(NUM_BUFFERED_VALUES);
-RingBuffer<float> humidity_values(NUM_BUFFERED_VALUES);
+RingBuffer<float> temp_c_values(5 * 60 / UPDATE_INTERVAL_SECONDS);
+RingBuffer<float> temp_c_5m_avgs(24 * 60 / UPLOAD_INTERVAL_MINUTES);
+RingBuffer<float> humidity_values(5 * 60 / UPDATE_INTERVAL_SECONDS);
+RingBuffer<float> humidity_5m_avgs(24 * 60 / UPLOAD_INTERVAL_MINUTES);
 
 // Buttons
 Button right_button(D5);
@@ -63,34 +65,43 @@ ATHBigNumbersDisplayer ath_big_numbers_displayer(&display, &aqi_values,
                                                  &humidity_values);
 ATHRawDisplayer ath_raw_displayer(&display, &aqi_values, &temp_c_values,
                                   &humidity_values);
-GraphDisplayer<float> temp_10m_graph_displayer(&display, &temp_c_values,
-                                               "Temp - 10m", minutes(10), 0, 27,
-                                               [](float c) {
-                                                 return String(CToF(c), 0);
-                                               });
 GraphDisplayer<float>
-    temp_1h_graph_displayer(&display, &temp_c_values, "Temp - 1h", hours(1), 0,
+    temp_1h_graph_displayer(&display, &temp_c_5m_avgs, "Temp - 1h", hours(1), 0,
                             27, [](float c) { return String(CToF(c), 0); });
-GraphDisplayer<float> humid_10m_graph_displayer(&display, &humidity_values,
-                                                "Humidity - 10m", minutes(10),
-                                                0, 100, [](float h) {
-                                                  return String(h, 0);
-                                                });
-GraphDisplayer<float> humid_1h_graph_displayer(&display, &humidity_values,
+GraphDisplayer<float>
+    temp_8h_graph_displayer(&display, &temp_c_5m_avgs, "Temp - 8h", hours(8), 0,
+                            27, [](float c) { return String(CToF(c), 0); });
+GraphDisplayer<float>
+    temp_24h_graph_displayer(&display, &temp_c_5m_avgs, "Temp - 24h", hours(24),
+                             0, 27, [](float c) { return String(CToF(c), 0); });
+GraphDisplayer<float> humid_1h_graph_displayer(&display, &humidity_5m_avgs,
                                                "Humidity - 1h", hours(1), 0,
                                                100, [](float h) {
                                                  return String(h, 0);
                                                });
-GraphDisplayer<uint16_t> aqi_10m_graph_displayer(&display, &aqi_values,
-                                                 "AQI - 10m", minutes(10), 0,
-                                                 50);
-GraphDisplayer<uint16_t> aqi_1h_graph_displayer(&display, &aqi_values,
+GraphDisplayer<float> humid_8h_graph_displayer(&display, &humidity_5m_avgs,
+                                               "Humidity - 8h", hours(8), 0,
+                                               100, [](float h) {
+                                                 return String(h, 0);
+                                               });
+GraphDisplayer<float> humid_24h_graph_displayer(&display, &humidity_5m_avgs,
+                                                "Humidity - 24h", hours(24), 0,
+                                                100, [](float h) {
+                                                  return String(h, 0);
+                                                });
+GraphDisplayer<uint16_t> aqi_1h_graph_displayer(&display, &aqi_5m_avgs,
                                                 "AQI - 1h", hours(1), 0, 50);
+GraphDisplayer<uint16_t> aqi_8h_graph_displayer(&display, &aqi_5m_avgs,
+                                                "AQI - 8h", hours(8), 0, 50);
+GraphDisplayer<uint16_t> aqi_24h_graph_displayer(&display, &aqi_5m_avgs,
+                                                 "AQI - 24h", hours(24), 0, 50);
 std::vector<Displayer *> displayers = {
     &ath_big_numbers_displayer, &ath_raw_displayer,
-    &temp_10m_graph_displayer,  &temp_1h_graph_displayer,
-    &humid_10m_graph_displayer, &humid_1h_graph_displayer,
-    &aqi_10m_graph_displayer,   &aqi_1h_graph_displayer};
+    &temp_1h_graph_displayer,   &temp_8h_graph_displayer,
+    &temp_24h_graph_displayer,  &humid_1h_graph_displayer,
+    &humid_8h_graph_displayer,  &humid_24h_graph_displayer,
+    &aqi_1h_graph_displayer,    &aqi_8h_graph_displayer,
+    &aqi_24h_graph_displayer};
 int displayer_i = 0;
 bool displaying = true;
 
@@ -235,6 +246,15 @@ void ReadAllSensors() {
 
 void UploadData() {
   Serial.println("Uploading data...");
+
+  const uint32_t now_millis = millis();
+  const uint16_t aqi_5m_avg = aqi_values.Average(minutes(5));
+  aqi_5m_avgs.Insert(aqi_5m_avg, now_millis);
+  const float temp_c_5m_avg = temp_c_values.Average(minutes(5));
+  temp_c_5m_avgs.Insert(temp_c_5m_avg, now_millis);
+  const float humidity_5m_avg = humidity_values.Average(minutes(5));
+  humidity_5m_avgs.Insert(humidity_5m_avg, now_millis);
+
   WiFiClient wifi_client;
   MQTTClient mqtt_client;
   mqtt_client.begin(RPI_IP, MOSQUITTO_PORT, wifi_client);
@@ -247,11 +267,11 @@ void UploadData() {
   data.has_timestamp = true;
   data.timestamp = time_client.getEpochTime();
   data.has_aqi_pm25_standard_5_m_avg = true;
-  data.aqi_pm25_standard_5_m_avg = aqi_values.Average(minutes(5));
+  data.aqi_pm25_standard_5_m_avg = aqi_5m_avg;
   data.has_temp_c_5_m_avg = true;
-  data.temp_c_5_m_avg = temp_c_values.Average(minutes(5));
+  data.temp_c_5_m_avg = temp_c_5m_avg;
   data.has_humidity_5_m_avg = true;
-  data.humidity_5_m_avg = humidity_values.Average(minutes(5));
+  data.humidity_5_m_avg = humidity_5m_avg;
 
   // TODO: Can I get a more exact estimation of the required buffer size?
   uint8_t buffer[128];
