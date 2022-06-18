@@ -95,14 +95,16 @@ GraphDisplayer<uint16_t> aqi_8h_graph_displayer(&display, &aqi_5m_avgs,
                                                 "AQI - 8h", hours(8), 0, 50);
 GraphDisplayer<uint16_t> aqi_24h_graph_displayer(&display, &aqi_5m_avgs,
                                                  "AQI - 24h", hours(24), 0, 50);
-std::vector<Displayer *> displayers = {
-    &ath_big_numbers_displayer, &ath_raw_displayer,
-    &temp_1h_graph_displayer,   &temp_8h_graph_displayer,
-    &temp_24h_graph_displayer,  &humid_1h_graph_displayer,
-    &humid_8h_graph_displayer,  &humid_24h_graph_displayer,
-    &aqi_1h_graph_displayer,    &aqi_8h_graph_displayer,
-    &aqi_24h_graph_displayer};
+std::vector<std::vector<Displayer *>> displayers = {
+    {&ath_big_numbers_displayer, &ath_raw_displayer},
+    {&temp_24h_graph_displayer, &temp_8h_graph_displayer,
+     &temp_1h_graph_displayer},
+    {&humid_24h_graph_displayer, &humid_8h_graph_displayer,
+     &humid_1h_graph_displayer},
+    {&aqi_24h_graph_displayer, &aqi_8h_graph_displayer,
+     &aqi_1h_graph_displayer}};
 int displayer_i = 0;
+int displayer_j = 0;
 bool displaying = true;
 
 // Timers
@@ -175,7 +177,7 @@ void setup() {
   dht.begin();
   time_client.begin();
 
-  displayers[displayer_i]->Refresh();
+  displayers[displayer_i][displayer_j]->Refresh();
   timer_display_timeout.Reset();
 }
 
@@ -183,23 +185,24 @@ void HandleDisplayChange(const int left_presses, const int middle_presses,
                          const int right_presses) {
   if (!displaying) {
     displaying = true;
-    displayers[displayer_i]->Refresh();
+    displayers[displayer_i][displayer_j]->Refresh();
     return;
+  }
+
+  const int i_change = right_presses - left_presses;
+  if (i_change != 0) {
+    // Add some large value to avoid negative modulo.
+    displayer_i =
+        (displayer_i + i_change + 3 * displayers.size()) % displayers.size();
+    displayer_j = 0;
   }
 
   if (middle_presses != 0) {
-    display.clearDisplay();
-    display.display();
-    displaying = false;
-    return;
+    displayer_j =
+        (displayer_j + middle_presses) % displayers[displayer_i].size();
   }
 
-  const int displayer_change = right_presses - left_presses;
-  if (displayer_change != 0) {
-    displayer_i = (displayer_i + displayer_change + 3 * displayers.size()) %
-                  displayers.size();
-    displayers[displayer_i]->Refresh();
-  }
+  displayers[displayer_i][displayer_j]->Refresh();
 }
 
 bool ReadAqiSensor(PM25_AQI_Data *data) {
@@ -240,7 +243,7 @@ void ReadAllSensors() {
   }
 
   if (displaying) {
-    displayers[displayer_i]->Update();
+    displayers[displayer_i][displayer_j]->Update();
   }
 }
 
