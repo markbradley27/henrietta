@@ -40,6 +40,7 @@ platformio_project(
         ":util",
         "//src/boards/enviro_micky/displayers:ath_big_numbers_displayer",
         "//src/boards/enviro_micky/displayers:ath_raw_displayer",
+        "//src/boards/enviro_micky/displayers:graph_displayer",
         "//src/consts:platformio_consts",
         "//src/proto:enviro_platformio_proto",
     ],

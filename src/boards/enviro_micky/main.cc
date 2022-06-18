@@ -17,13 +17,14 @@
 #include "button.h"
 #include "displayer.h"
 #include "enviro_platformio_proto.h"
+#include "graph_displayer.h"
 #include "platformio_consts.h"
 #include "ring_buffer.h"
 #include "util.h"
 
 #define UPDATE_INTERVAL_SECONDS 5
 #define UPLOAD_INTERVAL_MINUTES 5
-#define NUM_BUFFERED_VALUES 120
+#define NUM_BUFFERED_VALUES 720
 
 // AQI sensor
 SoftwareSerial aqi_serial(2, 3);
@@ -62,8 +63,13 @@ ATHBigNumbersDisplayer ath_big_numbers_displayer(&display, &aqi_values,
                                                  &humidity_values);
 ATHRawDisplayer ath_raw_displayer(&display, &aqi_values, &temp_c_values,
                                   &humidity_values);
-std::vector<Displayer *> displayers = {&ath_big_numbers_displayer,
-                                       &ath_raw_displayer};
+GraphDisplayer aqi_10m_graph_displayer(&display, &aqi_values, "AQI - 10m",
+                                       minutes(10), 0, 10);
+GraphDisplayer aqi_1h_graph_displayer(&display, &aqi_values, "AQI - 1h",
+                                      hours(1), 0, 10);
+std::vector<Displayer *> displayers = {
+    &aqi_10m_graph_displayer, &aqi_1h_graph_displayer,
+    &ath_big_numbers_displayer, &ath_raw_displayer};
 int displayer_i = 0;
 bool displaying = true;
 

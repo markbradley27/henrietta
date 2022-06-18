@@ -14,6 +14,16 @@ int msToDays(unsigned long ms) { return ms / 1000 / 60 / 60 / 24; }
 float CToF(float celsius) { return celsius * 1.8 + 32; }
 float FToC(float fahrenheit) { return (fahrenheit - 32) / 1.8; }
 
+// Screen text justification
+enum JustifyType {
+  CENTER,
+  RIGHT,
+};
+uint16_t JustifiedX(const JustifyType type, const String &text,
+                    const uint16_t width, const uint8_t text_size = 1) {
+  return (width - 6 * text_size * text.length()) / (type == CENTER ? 2 : 1);
+}
+
 struct Timer {
   unsigned long total_cycle_time;
   unsigned long last_cycle_time = 0;

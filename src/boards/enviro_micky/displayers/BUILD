@@ -36,3 +36,13 @@ platformio_library(
         "//src/boards/enviro_micky:util",
     ],
 )
+
+platformio_library(
+    name = "graph_displayer",
+    hdr = "graph_displayer.h",
+    deps = [
+        ":displayer",
+        "//src/boards/enviro_micky:ring_buffer",
+    ],
+)
+
