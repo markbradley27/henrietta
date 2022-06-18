@@ -12,15 +12,16 @@
 #define PLOT_MAX_Y 64
 #define LABEL_WIDTH 19
 
-class GraphDisplayer : public Displayer {
+template <class T> class GraphDisplayer : public Displayer {
 public:
-  // TODO: Generalize for more than just uint16_t's.
-  GraphDisplayer(Adafruit_SSD1306 *display, RingBuffer<uint16_t> *aqi_values,
-                 const String title, const uint32_t time_range_ms,
-                 const uint16_t deafult_min, const uint16_t default_max)
-      : Displayer(display), aqi_values_(aqi_values), title_(title),
+  GraphDisplayer(
+      Adafruit_SSD1306 *display, RingBuffer<T> *values, const String title,
+      const uint32_t time_range_ms, const T deafult_min, const T default_max,
+      std::function<String(T)> label_formatter =
+          [](T val) { return String(val); })
+      : Displayer(display), values_(values), title_(title),
         time_range_ms_(time_range_ms), default_min_(deafult_min),
-        default_max_(default_max) {}
+        default_max_(default_max), label_formatter_(label_formatter) {}
 
   void Refresh() override {
     display_->clearDisplay();
@@ -46,40 +47,33 @@ private:
     return PLOT_MAX_X - (PLOT_MAX_X - PLOT_MIN_X - LABEL_WIDTH) *
                             (now_millis - at_millis) / time_range_ms_;
   }
-  uint16_t CalcY(const uint16_t min, const uint16_t range,
-                 const uint16_t value) {
+  uint16_t CalcY(const T min, const T range, const T value) {
     return PLOT_MAX_Y - 1 -
            (PLOT_MAX_Y - PLOT_MIN_Y - 1) * (value - min) / range;
   }
 
   void DrawPlot() {
     const uint32_t now_millis = millis();
-    auto [min, max] = aqi_values_->MinMax(time_range_ms_);
-    // std::min and std::max were giving me a type missmatch error I didn't
-    // understand; this is good enough.
-    if (min > default_min_) {
-      min = 0;
-    }
-    if (max < default_max_) {
-      max = 10;
-    }
-    const uint16_t range = max - min;
+    const auto min_max = values_->MinMax(time_range_ms_);
+    const T min = std::min(default_min_, min_max.first);
+    const T max = std::max(default_max_, min_max.second);
+    const T range = max - min;
 
     display_->setTextSize(1);
-    const String max_label = String(max);
+    const String max_label = label_formatter_(max);
     display_->setCursor(PLOT_MIN_X + JustifiedX(RIGHT, max_label, LABEL_WIDTH),
                         PLOT_MIN_Y);
     display_->print(max_label);
-    const String min_label = String(min);
+    const String min_label = label_formatter_(min);
     display_->setCursor(PLOT_MIN_X + JustifiedX(RIGHT, min_label, LABEL_WIDTH),
                         PLOT_MAX_Y - 8);
     display_->print(min_label);
     display_->drawLine(PLOT_MIN_X + LABEL_WIDTH, PLOT_MIN_Y,
                        PLOT_MIN_X + LABEL_WIDTH, PLOT_MAX_Y, SSD1306_WHITE);
 
-    auto riter = aqi_values_->rbegin();
+    auto riter = values_->rbegin();
     auto prev = *riter;
-    for (++riter; riter != aqi_values_->rend() &&
+    for (++riter; riter != values_->rend() &&
                   now_millis - riter->at_millis < time_range_ms_;
          ++riter) {
       const int16_t prev_x = CalcX(now_millis, prev.at_millis);
@@ -92,12 +86,13 @@ private:
   }
 
   // Does not take ownership.
-  RingBuffer<uint16_t> *aqi_values_;
+  RingBuffer<T> *values_;
 
   const String title_;
   const uint32_t time_range_ms_;
-  const uint16_t default_min_;
-  const uint16_t default_max_;
+  const T default_min_;
+  const T default_max_;
+  std::function<String(T)> label_formatter_;
 };
 
 #endif // HENRIETTA_SRC_BOARDS_ENVIRO_MICKY_DISPLAYERS_GRAPH_DISPLAYER_H_

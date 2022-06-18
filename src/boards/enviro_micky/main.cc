@@ -63,13 +63,34 @@ ATHBigNumbersDisplayer ath_big_numbers_displayer(&display, &aqi_values,
                                                  &humidity_values);
 ATHRawDisplayer ath_raw_displayer(&display, &aqi_values, &temp_c_values,
                                   &humidity_values);
-GraphDisplayer aqi_10m_graph_displayer(&display, &aqi_values, "AQI - 10m",
-                                       minutes(10), 0, 10);
-GraphDisplayer aqi_1h_graph_displayer(&display, &aqi_values, "AQI - 1h",
-                                      hours(1), 0, 10);
+GraphDisplayer<float> temp_10m_graph_displayer(&display, &temp_c_values,
+                                               "Temp - 10m", minutes(10), 0, 27,
+                                               [](float c) {
+                                                 return String(CToF(c), 0);
+                                               });
+GraphDisplayer<float>
+    temp_1h_graph_displayer(&display, &temp_c_values, "Temp - 1h", hours(1), 0,
+                            27, [](float c) { return String(CToF(c), 0); });
+GraphDisplayer<float> humid_10m_graph_displayer(&display, &humidity_values,
+                                                "Humidity - 10m", minutes(10),
+                                                0, 100, [](float h) {
+                                                  return String(h, 0);
+                                                });
+GraphDisplayer<float> humid_1h_graph_displayer(&display, &humidity_values,
+                                               "Humidity - 1h", hours(1), 0,
+                                               100, [](float h) {
+                                                 return String(h, 0);
+                                               });
+GraphDisplayer<uint16_t> aqi_10m_graph_displayer(&display, &aqi_values,
+                                                 "AQI - 10m", minutes(10), 0,
+                                                 50);
+GraphDisplayer<uint16_t> aqi_1h_graph_displayer(&display, &aqi_values,
+                                                "AQI - 1h", hours(1), 0, 50);
 std::vector<Displayer *> displayers = {
-    &aqi_10m_graph_displayer, &aqi_1h_graph_displayer,
-    &ath_big_numbers_displayer, &ath_raw_displayer};
+    &ath_big_numbers_displayer, &ath_raw_displayer,
+    &temp_10m_graph_displayer,  &temp_1h_graph_displayer,
+    &humid_10m_graph_displayer, &humid_1h_graph_displayer,
+    &aqi_10m_graph_displayer,   &aqi_1h_graph_displayer};
 int displayer_i = 0;
 bool displaying = true;
 
