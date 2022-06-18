@@ -35,7 +35,7 @@ func (mh *MQTTHandler) HandleMetricEnviro(client mqtt.Client, message mqtt.Messa
 	}
 	log.Printf("Unmarshalled to: %s", text)
 
-	insertQuery := "INSERT INTO enviro (timestamp, aqi_pm25_standard_5_m_avg, temp_c_5_m_avg, humidity_5_m_avg) VALUES ($1, $2, $3, $4)"
+	insertQuery := "INSERT INTO enviro (timestamp, aqi_pm25_standard_5m_avg, temp_c_5m_avg, humidity_5m_avg) VALUES ($1, $2, $3, $4)"
 	_, err = mh.db.Exec(insertQuery, time.Unix(int64(data.GetTimestamp()), 0), data.GetAqiPm25Standard_5MAvg(), data.GetTempC_5MAvg(), data.GetHumidity_5MAvg())
 	if err != nil {
 		log.Printf("Error inserting data into postgres: %v", err)

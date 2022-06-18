@@ -269,12 +269,12 @@ void UploadData() {
   EnvironmentalData data = EnvironmentalData_init_zero;
   data.has_timestamp = true;
   data.timestamp = time_client.getEpochTime();
-  data.has_aqi_pm25_standard_5_m_avg = true;
-  data.aqi_pm25_standard_5_m_avg = aqi_5m_avg;
-  data.has_temp_c_5_m_avg = true;
-  data.temp_c_5_m_avg = temp_c_5m_avg;
-  data.has_humidity_5_m_avg = true;
-  data.humidity_5_m_avg = humidity_5m_avg;
+  data.has_aqi_pm25_standard_5m_avg = true;
+  data.aqi_pm25_standard_5m_avg = aqi_5m_avg;
+  data.has_temp_c_5m_avg = true;
+  data.temp_c_5m_avg = temp_c_5m_avg;
+  data.has_humidity_5m_avg = true;
+  data.humidity_5m_avg = humidity_5m_avg;
 
   // TODO: Can I get a more exact estimation of the required buffer size?
   uint8_t buffer[128];
