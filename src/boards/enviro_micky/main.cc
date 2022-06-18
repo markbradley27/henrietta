@@ -27,8 +27,10 @@
 // AQI sensor
 SoftwareSerial aqi_serial(2, 3);
 Adafruit_PM25AQI aqi_sensor = Adafruit_PM25AQI();
-RingBuffer<uint16_t> aqi_values(5 * 60 / UPDATE_INTERVAL_SECONDS);
-RingBuffer<uint16_t> aqi_5m_avgs(24 * 60 / UPLOAD_INTERVAL_MINUTES);
+RingBuffer<uint16_t>
+    aqi_values(10 * 60 / UPDATE_INTERVAL_SECONDS); // 10m of sensor readings.
+RingBuffer<uint16_t> aqi_5m_avgs(24 * 60 /
+                                 UPLOAD_INTERVAL_MINUTES); // 24h of 5m avgs.
 
 // DHT22 Temp/Humidity sensor
 // Value that should be added to each temp reading.
@@ -64,44 +66,53 @@ ATHBigNumbersDisplayer ath_big_numbers_displayer(&display, &aqi_values,
                                                  &humidity_values);
 ATHRawDisplayer ath_raw_displayer(&display, &aqi_values, &temp_c_values,
                                   &humidity_values);
-GraphDisplayer<float>
-    temp_1h_graph_displayer(&display, &temp_c_5m_avgs, "Temp - 1h", hours(1), 0,
-                            27, [](float c) { return String(CToF(c), 0); });
-GraphDisplayer<float>
-    temp_8h_graph_displayer(&display, &temp_c_5m_avgs, "Temp - 8h", hours(8), 0,
-                            27, [](float c) { return String(CToF(c), 0); });
-GraphDisplayer<float>
-    temp_24h_graph_displayer(&display, &temp_c_5m_avgs, "Temp - 24h", hours(24),
-                             0, 27, [](float c) { return String(CToF(c), 0); });
-GraphDisplayer<float> humid_1h_graph_displayer(&display, &humidity_5m_avgs,
-                                               "Humidity - 1h", hours(1), 0,
-                                               100, [](float h) {
-                                                 return String(h, 0);
-                                               });
-GraphDisplayer<float> humid_8h_graph_displayer(&display, &humidity_5m_avgs,
-                                               "Humidity - 8h", hours(8), 0,
-                                               100, [](float h) {
-                                                 return String(h, 0);
-                                               });
+std::function<String(float)> temp_formatter = [](float c) {
+  return String(CToF(c), 0);
+};
+GraphDisplayer<float> temp_24h_graph_displayer(&display, &temp_c_5m_avgs,
+                                               "Temp - 24h", hours(24), 0, 27,
+                                               temp_formatter);
+GraphDisplayer<float> temp_8h_graph_displayer(&display, &temp_c_5m_avgs,
+                                              "Temp - 8h", hours(8), 0, 27,
+                                              temp_formatter);
+GraphDisplayer<float> temp_1h_graph_displayer(&display, &temp_c_5m_avgs,
+                                              "Temp - 1h", hours(1), 0, 27,
+                                              temp_formatter);
+GraphDisplayer<float> temp_10m_graph_displayer(&display, &temp_c_values,
+                                               "Temp - 10m", minutes(10), 0, 27,
+                                               temp_formatter);
+std::function<String(float)> humid_formatter = [](float h) {
+  return String(h, 0);
+};
 GraphDisplayer<float> humid_24h_graph_displayer(&display, &humidity_5m_avgs,
                                                 "Humidity - 24h", hours(24), 0,
-                                                100, [](float h) {
-                                                  return String(h, 0);
-                                                });
-GraphDisplayer<uint16_t> aqi_1h_graph_displayer(&display, &aqi_5m_avgs,
-                                                "AQI - 1h", hours(1), 0, 50);
-GraphDisplayer<uint16_t> aqi_8h_graph_displayer(&display, &aqi_5m_avgs,
-                                                "AQI - 8h", hours(8), 0, 50);
+                                                100, humid_formatter);
+GraphDisplayer<float> humid_8h_graph_displayer(&display, &humidity_5m_avgs,
+                                               "Humidity - 8h", hours(8), 0,
+                                               100, humid_formatter);
+GraphDisplayer<float> humid_1h_graph_displayer(&display, &humidity_5m_avgs,
+                                               "Humidity - 1h", hours(1), 0,
+                                               100, humid_formatter);
+GraphDisplayer<float> humid_10m_graph_displayer(&display, &humidity_values,
+                                                "Humidity - 10m", minutes(10),
+                                                0, 100, humid_formatter);
 GraphDisplayer<uint16_t> aqi_24h_graph_displayer(&display, &aqi_5m_avgs,
                                                  "AQI - 24h", hours(24), 0, 50);
+GraphDisplayer<uint16_t> aqi_8h_graph_displayer(&display, &aqi_5m_avgs,
+                                                "AQI - 8h", hours(8), 0, 50);
+GraphDisplayer<uint16_t> aqi_1h_graph_displayer(&display, &aqi_5m_avgs,
+                                                "AQI - 1h", hours(1), 0, 50);
+GraphDisplayer<uint16_t> aqi_10m_graph_displayer(&display, &aqi_values,
+                                                 "AQI - 10m", minutes(10), 0,
+                                                 50);
 std::vector<std::vector<Displayer *>> displayers = {
     {&ath_big_numbers_displayer, &ath_raw_displayer},
     {&temp_24h_graph_displayer, &temp_8h_graph_displayer,
-     &temp_1h_graph_displayer},
+     &temp_1h_graph_displayer, &temp_10m_graph_displayer},
     {&humid_24h_graph_displayer, &humid_8h_graph_displayer,
-     &humid_1h_graph_displayer},
-    {&aqi_24h_graph_displayer, &aqi_8h_graph_displayer,
-     &aqi_1h_graph_displayer}};
+     &humid_1h_graph_displayer, &humid_10m_graph_displayer},
+    {&aqi_24h_graph_displayer, &aqi_8h_graph_displayer, &aqi_1h_graph_displayer,
+     &aqi_10m_graph_displayer}};
 int displayer_i = 0;
 int displayer_j = 0;
 bool displaying = true;
