@@ -13,7 +13,6 @@
 
 #include "ath_big_numbers_displayer.h"
 #include "ath_raw_displayer.h"
-#include "blank_displayer.h"
 #include "button.h"
 #include "displayer.h"
 #include "enviro_platformio_proto.h"
