@@ -204,7 +204,9 @@ void HandleDisplayChange(const int left_presses, const int middle_presses,
     // Add some large value to avoid negative modulo.
     displayer_i =
         (displayer_i + i_change + 3 * displayers.size()) % displayers.size();
-    displayer_j = 0;
+    if (displayer_j >= displayers[displayer_i].size()) {
+      displayer_j = 0;
+    }
   }
 
   if (middle_presses != 0) {
