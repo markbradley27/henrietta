@@ -38,9 +38,9 @@ RingBuffer<uint16_t> aqi_5m_avgs(24 * 60 /
 // Value that should be added to each humidity reading.
 #define HUMIDITY_CALIBRATION_OFFSET 12.28
 DHT dht(0, DHT22);
-RingBuffer<float> temp_c_values(5 * 60 / UPDATE_INTERVAL_SECONDS);
+RingBuffer<float> temp_c_values(10 * 60 / UPDATE_INTERVAL_SECONDS);
 RingBuffer<float> temp_c_5m_avgs(24 * 60 / UPLOAD_INTERVAL_MINUTES);
-RingBuffer<float> humidity_values(5 * 60 / UPDATE_INTERVAL_SECONDS);
+RingBuffer<float> humidity_values(10 * 60 / UPDATE_INTERVAL_SECONDS);
 RingBuffer<float> humidity_5m_avgs(24 * 60 / UPLOAD_INTERVAL_MINUTES);
 
 // Buttons
