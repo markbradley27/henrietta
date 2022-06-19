@@ -49,8 +49,8 @@ public:
 
 private:
   uint16_t CalcX(const uint32_t now_millis, const uint32_t at_millis) {
-    return PLOT_MAX_X - (PLOT_MAX_X - PLOT_MIN_X - X_AXIS_WIDTH) *
-                            (now_millis - at_millis) / time_range_ms_;
+    return PLOT_MAX_X - uint64_t(PLOT_MAX_X - PLOT_MIN_X - X_AXIS_WIDTH) *
+                            uint64_t(now_millis - at_millis) / time_range_ms_;
   }
   uint16_t CalcY(const T min, const T range, const T value) {
     return PLOT_MAX_Y - Y_AXIS_HEIGHT - 1 -
