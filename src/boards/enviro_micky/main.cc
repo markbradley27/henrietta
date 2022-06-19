@@ -70,41 +70,50 @@ std::function<String(float)> temp_formatter = [](float c) {
   return String(CToF(c), 0);
 };
 GraphDisplayer<float> temp_24h_graph_displayer(&display, &temp_c_5m_avgs,
-                                               "Temp - 24h", hours(24), 0, 27,
-                                               temp_formatter);
+                                               "Temp - 24h", hours(24),
+                                               hours(1), 0, 27, temp_formatter);
 GraphDisplayer<float> temp_8h_graph_displayer(&display, &temp_c_5m_avgs,
-                                              "Temp - 8h", hours(8), 0, 27,
-                                              temp_formatter);
+                                              "Temp - 8h", hours(8), hours(1),
+                                              0, 27, temp_formatter);
 GraphDisplayer<float> temp_1h_graph_displayer(&display, &temp_c_5m_avgs,
-                                              "Temp - 1h", hours(1), 0, 27,
+                                              "Temp - 1h", hours(1),
+                                              minutes(10), 0, 27,
                                               temp_formatter);
 GraphDisplayer<float> temp_10m_graph_displayer(&display, &temp_c_values,
-                                               "Temp - 10m", minutes(10), 0, 27,
+                                               "Temp - 10m", minutes(10),
+                                               minutes(1), 0, 27,
                                                temp_formatter);
 std::function<String(float)> humid_formatter = [](float h) {
   return String(h, 0);
 };
 GraphDisplayer<float> humid_24h_graph_displayer(&display, &humidity_5m_avgs,
-                                                "Humidity - 24h", hours(24), 0,
-                                                100, humid_formatter);
+                                                "Humidity - 24h", hours(24),
+                                                hours(1), 0, 100,
+                                                humid_formatter);
 GraphDisplayer<float> humid_8h_graph_displayer(&display, &humidity_5m_avgs,
-                                               "Humidity - 8h", hours(8), 0,
-                                               100, humid_formatter);
+                                               "Humidity - 8h", hours(8),
+                                               hours(1), 0, 100,
+                                               humid_formatter);
 GraphDisplayer<float> humid_1h_graph_displayer(&display, &humidity_5m_avgs,
-                                               "Humidity - 1h", hours(1), 0,
-                                               100, humid_formatter);
+                                               "Humidity - 1h", hours(1),
+                                               minutes(10), 0, 100,
+                                               humid_formatter);
 GraphDisplayer<float> humid_10m_graph_displayer(&display, &humidity_values,
                                                 "Humidity - 10m", minutes(10),
-                                                0, 100, humid_formatter);
+                                                minutes(1), 0, 100,
+                                                humid_formatter);
 GraphDisplayer<uint16_t> aqi_24h_graph_displayer(&display, &aqi_5m_avgs,
-                                                 "AQI - 24h", hours(24), 0, 50);
+                                                 "AQI - 24h", hours(24),
+                                                 hours(1), 0, 50);
 GraphDisplayer<uint16_t> aqi_8h_graph_displayer(&display, &aqi_5m_avgs,
-                                                "AQI - 8h", hours(8), 0, 50);
+                                                "AQI - 8h", hours(8), hours(1),
+                                                0, 50);
 GraphDisplayer<uint16_t> aqi_1h_graph_displayer(&display, &aqi_5m_avgs,
-                                                "AQI - 1h", hours(1), 0, 50);
+                                                "AQI - 1h", hours(1),
+                                                minutes(10), 0, 50);
 GraphDisplayer<uint16_t> aqi_10m_graph_displayer(&display, &aqi_values,
-                                                 "AQI - 10m", minutes(10), 0,
-                                                 50);
+                                                 "AQI - 10m", minutes(10),
+                                                 minutes(1), 0, 50);
 std::vector<std::vector<Displayer *>> displayers = {
     {&ath_big_numbers_displayer, &ath_raw_displayer},
     {&temp_24h_graph_displayer, &temp_8h_graph_displayer,
