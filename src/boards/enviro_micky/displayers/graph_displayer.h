@@ -54,19 +54,37 @@ private:
 
   void DrawPlot() {
     const uint32_t now_millis = millis();
-    const auto min_max = values_->MinMax(time_range_ms_);
-    const T min = std::min(default_min_, min_max.first);
-    const T max = std::max(default_max_, min_max.second);
-    const T range = max - min;
+    const auto &[min, max] = values_->MinMax(time_range_ms_);
+    const T plot_min = std::min(default_min_, min);
+    const T plot_max = std::max(default_max_, max);
+    const T plot_range = plot_max - plot_min;
+
+    const String max_label = label_formatter_(max);
+    int max_x = PLOT_MIN_X + JustifiedX(RIGHT, max_label, LABEL_WIDTH);
+    int max_y = CalcY(plot_min, plot_range, max) - 4;
+    const String min_label = label_formatter_(min);
+    int min_x = PLOT_MIN_X + JustifiedX(RIGHT, min_label, LABEL_WIDTH);
+    int min_y = CalcY(plot_min, plot_range, min) - 4;
+    if (min_y - max_y < 8) {
+      const int nudge_apart = (9 - (min_y - max_y)) / 2;
+      max_y -= nudge_apart;
+      min_y += nudge_apart;
+    }
+    if (max_y < PLOT_MIN_Y) {
+      const int nudge_down = PLOT_MIN_Y - max_y;
+      max_y += nudge_down;
+      min_y += nudge_down;
+    }
+    if (min_y > PLOT_MAX_Y - 8) {
+      const int nudge_up = min_y - (PLOT_MAX_Y - 8);
+      max_y -= nudge_up;
+      min_y -= nudge_up;
+    }
 
     display_->setTextSize(1);
-    const String max_label = label_formatter_(max);
-    display_->setCursor(PLOT_MIN_X + JustifiedX(RIGHT, max_label, LABEL_WIDTH),
-                        PLOT_MIN_Y);
+    display_->setCursor(max_x, max_y);
     display_->print(max_label);
-    const String min_label = label_formatter_(min);
-    display_->setCursor(PLOT_MIN_X + JustifiedX(RIGHT, min_label, LABEL_WIDTH),
-                        PLOT_MAX_Y - 8);
+    display_->setCursor(min_x, min_y);
     display_->print(min_label);
     display_->drawLine(PLOT_MIN_X + LABEL_WIDTH, PLOT_MIN_Y,
                        PLOT_MIN_X + LABEL_WIDTH, PLOT_MAX_Y, SSD1306_WHITE);
@@ -77,9 +95,9 @@ private:
                   now_millis - riter->at_millis < time_range_ms_;
          ++riter) {
       const int16_t prev_x = CalcX(now_millis, prev.at_millis);
-      const int16_t prev_y = CalcY(min, range, prev.value);
+      const int16_t prev_y = CalcY(plot_min, plot_range, prev.value);
       const int16_t cur_x = CalcX(now_millis, riter->at_millis);
-      const int16_t cur_y = CalcY(min, range, riter->value);
+      const int16_t cur_y = CalcY(plot_min, plot_range, riter->value);
       display_->writeLine(prev_x, prev_y, cur_x, cur_y, SSD1306_WHITE);
       prev = *riter;
     }
