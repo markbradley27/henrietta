@@ -122,8 +122,8 @@ std::vector<std::vector<Displayer *>> displayers = {
      &humid_1h_graph_displayer, &humid_10m_graph_displayer},
     {&aqi_24h_graph_displayer, &aqi_8h_graph_displayer, &aqi_1h_graph_displayer,
      &aqi_10m_graph_displayer}};
-int displayer_i = 0;
-int displayer_j = 0;
+size_t displayer_i = 0;
+size_t displayer_j = 0;
 bool displaying = true;
 
 // Timers
