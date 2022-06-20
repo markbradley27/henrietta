@@ -1,6 +1,13 @@
 #ifndef HENRIETTA_SRC_BOARDS_ENVIRO_MICKY_UTIL_H_
 #define HENRIETTA_SRC_BOARDS_ENVIRO_MICKY_UTIL_H_
 
+struct Timer {
+  unsigned long total_cycle_time;
+  unsigned long last_cycle_time = 0;
+  void Reset() { last_cycle_time = millis(); };
+  bool Complete() { return (millis() - last_cycle_time) > total_cycle_time; };
+};
+
 // Time helpers
 unsigned long seconds(int s) { return s * 1000; }
 unsigned long minutes(int m) { return m * 1000 * 60; }
@@ -53,12 +60,5 @@ int16_t JustifiedY(const JustifyYType type, const int16_t box_height,
   return (box_height - BASE_TEXT_HEIGHT * text_height + text_height) /
          (type == MIDDLE ? 2 : 1);
 }
-
-struct Timer {
-  unsigned long total_cycle_time;
-  unsigned long last_cycle_time = 0;
-  void Reset() { last_cycle_time = millis(); };
-  bool Complete() { return (millis() - last_cycle_time) > total_cycle_time; };
-};
 
 #endif // HENRIETTA_SRC_BOARDS_ENVIRO_MICKY_UTIL_H_
