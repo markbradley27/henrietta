@@ -60,6 +60,7 @@ private:
 
   void DrawPlot() {
     const uint32_t now_millis = millis();
+    const T current = values_->Latest().value;
     const auto &[min, max] = values_->MinMax(time_range_ms_);
     const T plot_min = std::min(default_min_, min);
     const T plot_max = std::max(default_max_, max);
@@ -67,31 +68,46 @@ private:
 
     // Y-axis labels.
     const String max_label = label_formatter_(max);
+    const String current_label = label_formatter_(current);
     const String min_label = label_formatter_(min);
     const int x_axis_width =
-        std::max(max_label.length(), min_label.length()) * 6;
+        std::max(max_label.length(),
+                 std::max(current_label.length(), min_label.length())) *
+        6;
     int max_x = PLOT_MIN_X + JustifiedX(RIGHT, max_label, x_axis_width - 1);
     int max_y = CalcY(plot_min, plot_range, max) - 4;
+    int current_x =
+        PLOT_MIN_X + JustifiedX(RIGHT, current_label, x_axis_width - 1);
+    int current_y = CalcY(plot_min, plot_range, current) - 4;
     int min_x = PLOT_MIN_X + JustifiedX(RIGHT, min_label, x_axis_width - 1);
     int min_y = CalcY(plot_min, plot_range, min) - 4;
-    if (min_y - max_y < 8) {
-      const int nudge_apart = (9 - (min_y - max_y)) / 2;
-      max_y -= nudge_apart;
-      min_y += nudge_apart;
-    }
+
+    const auto overlapping = [](int top_y, int bottom_y) {
+      return std::max(0, 8 - std::abs(top_y - bottom_y));
+    };
+    // If max or min overlapping with current, move them apart.
+    max_y -= overlapping(max_y, current_y);
+    min_y += overlapping(current_y, min_y);
+
+    // If max off the top, lower everything that needs to move down.
     if (max_y < PLOT_MIN_Y) {
-      const int nudge_down = PLOT_MIN_Y - max_y;
-      max_y += nudge_down;
-      min_y += nudge_down;
+      max_y = PLOT_MIN_Y;
+      current_y += overlapping(max_y, current_y);
+      min_y += overlapping(current_y, min_y);
     }
+
+    // If min off the bottom, raise everything that needs to move up.
     if (min_y > PLOT_MAX_Y - 8) {
-      const int nudge_up = min_y - (PLOT_MAX_Y - 8);
-      max_y -= nudge_up;
-      min_y -= nudge_up;
+      min_y = PLOT_MAX_Y - 8;
+      current_y -= overlapping(current_y, min_y);
+      max_y -= overlapping(max_y, current_y);
     }
+
     display_->setTextSize(1);
     display_->setCursor(max_x, max_y);
     display_->print(max_label);
+    display_->setCursor(current_x, current_y);
+    display_->print(current_label);
     display_->setCursor(min_x, min_y);
     display_->print(min_label);
     display_->drawLine(PLOT_MIN_X + x_axis_width, PLOT_MIN_Y,
