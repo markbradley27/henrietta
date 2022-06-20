@@ -70,9 +70,9 @@ private:
     const String min_label = label_formatter_(min);
     const int x_axis_width =
         std::max(max_label.length(), min_label.length()) * 6;
-    int max_x = PLOT_MIN_X + JustifiedX(RIGHT, max_label, x_axis_width);
+    int max_x = PLOT_MIN_X + JustifiedX(RIGHT, max_label, x_axis_width - 1);
     int max_y = CalcY(plot_min, plot_range, max) - 4;
-    int min_x = PLOT_MIN_X + JustifiedX(RIGHT, min_label, x_axis_width);
+    int min_x = PLOT_MIN_X + JustifiedX(RIGHT, min_label, x_axis_width - 1);
     int min_y = CalcY(plot_min, plot_range, min) - 4;
     if (min_y - max_y < 8) {
       const int nudge_apart = (9 - (min_y - max_y)) / 2;

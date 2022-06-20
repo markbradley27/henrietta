@@ -15,13 +15,43 @@ float CToF(float celsius) { return celsius * 1.8 + 32; }
 float FToC(float fahrenheit) { return (fahrenheit - 32) / 1.8; }
 
 // Screen text justification
-enum JustifyType {
+#define BASE_TEXT_WIDTH 6
+enum JustifyXType {
   CENTER,
   RIGHT,
 };
-uint16_t JustifiedX(const JustifyType type, const String &text,
-                    const uint16_t width, const uint8_t text_size = 1) {
-  return (width - 6 * text_size * text.length()) / (type == CENTER ? 2 : 1);
+// Returns the x offset needed to justify text within a bounding box.
+// Args:
+// * type - type of justification to calculate
+// * text_length - number of characters
+// * box_width - width of bounding box in pixels
+// * text_width - text width scaling factor (the value provided to setTextSize)
+int16_t JustifiedX(const JustifyXType type, const size_t text_length,
+                   const int16_t box_width, const uint8_t text_width = 1) {
+  return (box_width - BASE_TEXT_WIDTH * text_width * text_length + text_width) /
+         (type == CENTER ? 2 : 1);
+}
+// Convenience method that uses the length of `text`.
+int16_t JustifiedX(const JustifyXType type, const String &text,
+                   const int16_t box_width, const uint8_t text_width = 1) {
+  return JustifiedX(type, text.length(), box_width, text_width);
+}
+
+#define BASE_TEXT_HEIGHT 8
+enum JustifyYType {
+  MIDDLE,
+  BOTTOM,
+};
+// Returns the y offset needed to justify text within a bounding box.
+// Args:
+// * type - type of justification to calculate
+// * box_height - height of bounding box in pixels
+// * text_height - text height scaling factor (the value provided to
+//   setTextSize)
+int16_t JustifiedY(const JustifyYType type, const int16_t box_height,
+                   const uint8_t text_height = 1) {
+  return (box_height - BASE_TEXT_HEIGHT * text_height + text_height) /
+         (type == MIDDLE ? 2 : 1);
 }
 
 struct Timer {
