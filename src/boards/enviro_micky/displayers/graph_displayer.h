@@ -10,7 +10,6 @@
 #define PLOT_MAX_X 128
 #define PLOT_MIN_Y 16
 #define PLOT_MAX_Y 64
-#define X_AXIS_WIDTH 19
 #define Y_AXIS_HEIGHT 3
 
 template <class T> class GraphDisplayer : public Displayer {
@@ -48,8 +47,9 @@ public:
   }
 
 private:
-  uint16_t CalcX(const uint32_t now_millis, const uint32_t at_millis) {
-    return PLOT_MAX_X - uint64_t(PLOT_MAX_X - PLOT_MIN_X - X_AXIS_WIDTH) *
+  uint16_t CalcX(const int x_axis_width, const uint32_t now_millis,
+                 const uint32_t at_millis) {
+    return PLOT_MAX_X - uint64_t(PLOT_MAX_X - PLOT_MIN_X - x_axis_width) *
                             uint64_t(now_millis - at_millis) / time_range_ms_;
   }
   uint16_t CalcY(const T min, const T range, const T value) {
@@ -67,10 +67,12 @@ private:
 
     // Y-axis labels.
     const String max_label = label_formatter_(max);
-    int max_x = PLOT_MIN_X + JustifiedX(RIGHT, max_label, X_AXIS_WIDTH);
-    int max_y = CalcY(plot_min, plot_range, max) - 4;
     const String min_label = label_formatter_(min);
-    int min_x = PLOT_MIN_X + JustifiedX(RIGHT, min_label, X_AXIS_WIDTH);
+    const int x_axis_width =
+        std::max(max_label.length(), min_label.length()) * 6;
+    int max_x = PLOT_MIN_X + JustifiedX(RIGHT, max_label, x_axis_width);
+    int max_y = CalcY(plot_min, plot_range, max) - 4;
+    int min_x = PLOT_MIN_X + JustifiedX(RIGHT, min_label, x_axis_width);
     int min_y = CalcY(plot_min, plot_range, min) - 4;
     if (min_y - max_y < 8) {
       const int nudge_apart = (9 - (min_y - max_y)) / 2;
@@ -92,19 +94,19 @@ private:
     display_->print(max_label);
     display_->setCursor(min_x, min_y);
     display_->print(min_label);
-    display_->drawLine(PLOT_MIN_X + X_AXIS_WIDTH, PLOT_MIN_Y,
-                       PLOT_MIN_X + X_AXIS_WIDTH, PLOT_MAX_Y - Y_AXIS_HEIGHT,
+    display_->drawLine(PLOT_MIN_X + x_axis_width, PLOT_MIN_Y,
+                       PLOT_MIN_X + x_axis_width, PLOT_MAX_Y - Y_AXIS_HEIGHT,
                        SSD1306_WHITE);
 
     // X-axis tick marks.
     for (uint32_t tick_millis = time_range_ms_; tick_millis > 0;
          tick_millis -= time_tick_interval_ms_) {
       // Abusing the CalcX api a little bit here, but it works.
-      const int16_t tick_x = CalcX(time_range_ms_, tick_millis);
+      const int16_t tick_x = CalcX(x_axis_width, time_range_ms_, tick_millis);
       display_->drawLine(tick_x, PLOT_MAX_Y - Y_AXIS_HEIGHT, tick_x, PLOT_MAX_Y,
                          SSD1306_WHITE);
     }
-    display_->drawLine(PLOT_MIN_X + X_AXIS_WIDTH, PLOT_MAX_Y - Y_AXIS_HEIGHT,
+    display_->drawLine(PLOT_MIN_X + x_axis_width, PLOT_MAX_Y - Y_AXIS_HEIGHT,
                        PLOT_MAX_X, PLOT_MAX_Y - Y_AXIS_HEIGHT, SSD1306_WHITE);
 
     // Plot.
@@ -113,9 +115,9 @@ private:
     for (++riter; riter != values_->rend() &&
                   now_millis - riter->at_millis < time_range_ms_;
          ++riter) {
-      const int16_t prev_x = CalcX(now_millis, prev.at_millis);
+      const int16_t prev_x = CalcX(x_axis_width, now_millis, prev.at_millis);
       const int16_t prev_y = CalcY(plot_min, plot_range, prev.value);
-      const int16_t cur_x = CalcX(now_millis, riter->at_millis);
+      const int16_t cur_x = CalcX(x_axis_width, now_millis, riter->at_millis);
       const int16_t cur_y = CalcY(plot_min, plot_range, riter->value);
       display_->writeLine(prev_x, prev_y, cur_x, cur_y, SSD1306_WHITE);
       prev = *riter;
