@@ -50,22 +50,15 @@ load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_depe
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
 
 go_repository(
-    name = "com_github_go_yaml_yaml",
-    importpath = "github.com/go-yaml/yaml",
-    tag = "v3.0.0",
-)
-
-# Required by paho.mqtt.golang.
-go_repository(
-    name = "com_github_gorilla_websocket",
-    importpath = "github.com/gorilla/websocket",
-    tag = "v1.5.0",
-)
-
-go_repository(
     name = "com_github_eclipse_paho_mqtt_golang",
     importpath = "github.com/eclipse/paho.mqtt.golang",
     tag = "v1.3.5",
+)
+
+go_repository(
+    name = "com_github_go_yaml_yaml",
+    importpath = "github.com/go-yaml/yaml",
+    tag = "v3.0.0",
 )
 
 go_repository(
@@ -74,6 +67,12 @@ go_repository(
     tag = "v1.28.0",
 )
 
+# Required by paho.mqtt.golang.
+go_repository(
+    name = "com_github_gorilla_websocket",
+    importpath = "github.com/gorilla/websocket",
+    tag = "v1.5.0",
+)
 
 go_repository(
     name = "com_github_lib_pq",
