@@ -5,11 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	consts "github.com/markbradley27/henrietta/src/consts/go_consts"
 	"github.com/markbradley27/henrietta/src/daemons/db_logger/mqtt_handler"
+	"github.com/markbradley27/henrietta/src/daemons/log_util"
+	"github.com/markbradley27/henrietta/src/daemons/mqtt_util"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	_ "github.com/lib/pq"
@@ -26,19 +27,10 @@ func main() {
 	pgDb := flag.String("pg_db", consts.PgDb, "Postgres database.")
 	flag.Parse()
 
-	if *logFilePath != "" {
-		logFile, err := os.OpenFile(*logFilePath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
-		if err != nil {
-			log.Printf("Unable to open log file %v, logging to stderr.", *logFilePath)
-		} else {
-			log.Printf("Logging to %v.", *logFilePath)
-			log.SetOutput(logFile)
-		}
-	}
+	log_util.SetupLogFile(*logFilePath)
 
-	mqttAddr := fmt.Sprintf("tcp://%s:%d", *mqttHost, *mqttPort)
-	log.Printf("Connecting to MQTT server at %#v as %#v...", mqttAddr, *mqttClientID)
-	mqttClient, err := connectMQTTClient(mqttAddr, *mqttClientID)
+	log.Printf("Connecting to MQTT server at %s:%d as %#v...", *mqttHost, *mqttPort, *mqttClientID)
+	mqttClient, err := mqtt_util.ConnectMQTTClient(*mqttHost, *mqttPort, *mqttClientID)
 	if err != nil {
 		log.Fatalf("Connecting to MQTT: %v", err)
 	}
@@ -59,23 +51,6 @@ func main() {
 	mqttClient.Subscribe(consts.TopicMetricsEnviro, 2, mqttHandler.HandleMetricEnviro)
 
 	select {}
-}
-
-func connectMQTTClient(addr, clientID string) (mqtt.Client, error) {
-	options := mqtt.NewClientOptions()
-	options.AddBroker(addr)
-	options.SetClientID(clientID)
-	client := mqtt.NewClient(options)
-
-	token := client.Connect()
-	token.WaitTimeout(30 * time.Second)
-	if token.Error() != nil {
-		return nil, token.Error()
-	}
-	if !client.IsConnected() {
-		return nil, fmt.Errorf("connection timed out")
-	}
-	return client, nil
 }
 
 func connectPostgres(dbName, user string) (*sql.DB, error) {

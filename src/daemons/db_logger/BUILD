@@ -21,6 +21,8 @@ go_binary(
     deps = [
         ":mqtt_handler",
         "//src/consts:go_consts",
+        "//src/daemons:log_util",
+        "//src/daemons:mqtt_util",
         "@com_github_eclipse_paho_mqtt_golang//:paho_mqtt_golang",
         "@com_github_lib_pq//:pq",
     ],
