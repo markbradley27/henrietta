@@ -11,6 +11,8 @@ pg_db: "henrietta"
 mosquitto_port: 1883
 
 topic_metrics_enviro: "metrics/enviro" # EnvironmentalData protos.
+topic_state_van: "state/van"           # VanState protos.
 
 client_id_db_logger: "db_logger"
 client_id_enviro_micky: "enviro_micky"
+client_id_van_state: "van_state"

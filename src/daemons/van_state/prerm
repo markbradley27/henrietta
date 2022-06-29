@@ -1,0 +1,4 @@
+#!/bin/sh
+
+systemctl stop van_state
+systemctl disable van_state

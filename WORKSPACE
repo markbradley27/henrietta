@@ -80,6 +80,12 @@ go_repository(
     tag = "v1.10.4",
 )
 
+go_repository(
+    name = "com_github_warthog618_gpiod",
+    importpath = "github.com/warthog618/gpiod",
+    tag = "v0.8.0",
+)
+
 go_rules_dependencies()
 
 go_register_toolchains(version = "1.18.2")

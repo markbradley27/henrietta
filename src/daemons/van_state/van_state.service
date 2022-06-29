@@ -1,0 +1,14 @@
+[Unit]
+Description="Van state monitor daemon for henrietta."
+After=mosquitto.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=pi
+ExecStart=/usr/local/bin/van_state --log_file /var/log/van_state.log
+
+[Install]
+WantedBy=multi-user.target

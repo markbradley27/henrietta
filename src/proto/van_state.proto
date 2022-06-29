@@ -1,0 +1,11 @@
+syntax = 'proto2';
+
+message VanState {
+  enum EngineState {
+    ENGINE_UNDEFINED = 0;
+    ENGINE_OFF = 1;
+    ENGINE_RUNNING = 2;
+  }
+
+  optional EngineState engine_state = 1;
+}

@@ -19,3 +19,14 @@ platformio_proto_library(
     name = "enviro_platformio_proto",
     proto = "enviro.proto",
 )
+
+proto_library(
+    name = "van_state_proto",
+    srcs = ["van_state.proto"],
+)
+
+go_proto_library(
+    name = "van_state_go_proto",
+    importpath = "github.com/markbradley27/henrietta/src/proto/van_state_go_proto",
+    proto = ":van_state_proto",
+)
