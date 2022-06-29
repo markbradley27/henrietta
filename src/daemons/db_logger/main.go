@@ -5,14 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"time"
 
 	consts "github.com/markbradley27/henrietta/src/consts/go_consts"
 	"github.com/markbradley27/henrietta/src/daemons/db_logger/mqtt_handler"
 	"github.com/markbradley27/henrietta/src/daemons/log_util"
 	"github.com/markbradley27/henrietta/src/daemons/mqtt_util"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	_ "github.com/lib/pq"
 )
 
