@@ -45,10 +45,29 @@ func main() {
 
 	mqttHandler := mqtt_handler.NewMQTTHandler(db)
 
-	log.Printf("Subscribing to %#v.", consts.TopicMetricsEnviro)
-	mqttClient.Subscribe(consts.TopicMetricsEnviro, 2, mqttHandler.HandleMetricEnviro)
+	metricsEnviroToken := mqttClient.Subscribe(consts.TopicMetricsEnviro, 2, mqttHandler.HandleMetricEnviro)
+	metricsEnviroDone := metricsEnviroToken.Done()
+	stateVanToken := mqttClient.Subscribe(consts.TopicStateVan, 2, mqttHandler.HandleStateVan)
+	stateVanDone := stateVanToken.Done()
 
-	select {}
+	for {
+		select {
+		case <-metricsEnviroDone:
+			if err := metricsEnviroToken.Error(); err != nil {
+				log.Printf("Error subscribing to %v: %v", consts.TopicMetricsEnviro, err)
+			} else {
+				log.Printf("Subscribed to %v.", consts.TopicMetricsEnviro)
+			}
+			metricsEnviroDone = nil
+		case <-stateVanDone:
+			if err := stateVanToken.Error(); err != nil {
+				log.Printf("Error subscribing to %v: %v", consts.TopicStateVan, err)
+			} else {
+				log.Printf("Subscribed to %v.", consts.TopicStateVan)
+			}
+			stateVanDone = nil
+		}
+	}
 }
 
 func connectPostgres(dbName, user string) (*sql.DB, error) {

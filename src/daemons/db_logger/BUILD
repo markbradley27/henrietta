@@ -9,6 +9,7 @@ go_library(
     importpath = "github.com/markbradley27/henrietta/src/daemons/db_logger/mqtt_handler",
     deps = [
         "//src/proto:enviro_go_proto",
+        "//src/proto:van_state_go_proto",
         "@com_github_eclipse_paho_mqtt_golang//:paho_mqtt_golang",
         "@org_golang_google_protobuf//encoding/prototext",
         "@org_golang_google_protobuf//proto",
