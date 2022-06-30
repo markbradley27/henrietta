@@ -6,6 +6,9 @@
 #include "displayer.h"
 #include "ring_buffer.h"
 
+#define CHAR_HEIGHT 8
+#define CHAR_WIDTH 6
+
 #define PLOT_MIN_X 0
 #define PLOT_MAX_X 128
 #define PLOT_MIN_Y 16
@@ -83,7 +86,7 @@ private:
     int min_y = CalcY(plot_min, plot_range, min) - 4;
 
     const auto overlapping = [](int top_y, int bottom_y) {
-      return std::max(0, 8 - std::abs(top_y - bottom_y));
+      return std::max(0, CHAR_HEIGHT - std::abs(top_y - bottom_y));
     };
     // If max or min overlapping with current, move them apart.
     max_y -= overlapping(max_y, current_y);
@@ -92,15 +95,23 @@ private:
     // If max off the top, lower everything that needs to move down.
     if (max_y < PLOT_MIN_Y) {
       max_y = PLOT_MIN_Y;
-      current_y += overlapping(max_y, current_y);
-      min_y += overlapping(current_y, min_y);
+      if (overlapping(max_y, current_y)) {
+        current_y = PLOT_MIN_Y + CHAR_HEIGHT;
+      }
+      if (overlapping(current_y, min_y)) {
+        min_y = PLOT_MIN_Y + 2 * CHAR_HEIGHT;
+      }
     }
 
     // If min off the bottom, raise everything that needs to move up.
-    if (min_y > PLOT_MAX_Y - 8) {
-      min_y = PLOT_MAX_Y - 8;
-      current_y -= overlapping(current_y, min_y);
-      max_y -= overlapping(max_y, current_y);
+    if (min_y > PLOT_MAX_Y - CHAR_HEIGHT) {
+      min_y = PLOT_MAX_Y - CHAR_HEIGHT;
+      if (overlapping(current_y, min_y)) {
+        current_y = PLOT_MAX_Y - 2 * CHAR_HEIGHT;
+      }
+      if (overlapping(max_y, current_y)) {
+        max_y = PLOT_MAX_Y - 3 * CHAR_HEIGHT;
+      }
     }
 
     display_->setTextSize(1);
