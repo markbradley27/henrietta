@@ -17,6 +17,11 @@ platformio_library(
     hdr = "util.h",
 )
 
+platformio_library(
+    name = "van_bitmap",
+    hdr = "van_bitmap.h",
+)
+
 platformio_project(
     name = "enviro_micky",
     src = "main.cc",
@@ -38,6 +43,7 @@ platformio_project(
         ":button",
         ":ring_buffer",
         ":util",
+        ":van_bitmap",
         "//src/boards/enviro_micky/displayers:ath_big_numbers_displayer",
         "//src/boards/enviro_micky/displayers:ath_raw_displayer",
         "//src/boards/enviro_micky/displayers:graph_displayer",

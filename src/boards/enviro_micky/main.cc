@@ -20,6 +20,7 @@
 #include "platformio_consts.h"
 #include "ring_buffer.h"
 #include "util.h"
+#include "van_bitmap.h"
 
 #define UPDATE_INTERVAL_SECONDS 5
 #define UPLOAD_INTERVAL_MINUTES 5
@@ -145,8 +146,9 @@ void InitDisplay() {
       ; // Don't proceed, loop forever
   }
   display.clearDisplay();
-
   display.setTextColor(SSD1306_WHITE);
+  display.drawBitmap(29, 15, kVanBitmap, 70, 36, SSD1306_WHITE);
+  display.display();
 }
 
 void InitWifi() {
